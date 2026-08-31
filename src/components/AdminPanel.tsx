@@ -255,6 +255,12 @@ export function AdminPanel() {
               </div>
 
               <div className="flex flex-col gap-2 border-t border-pink-border pt-4">
+                <h3 className="font-bold">OG Image URL (Social Sharing Preview)</h3>
+                <p className="text-xs opacity-70">Image shown when sharing the link on WhatsApp, Facebook, etc. Direct URL.</p>
+                <Input label="OG Image URL" value={data.ogImageUrl || ""} onChange={(v) => handleChange("ogImageUrl", v)} />
+              </div>
+
+              <div className="flex flex-col gap-2 border-t border-pink-border pt-4">
                 <h3 className="font-bold">Hero Section Video</h3>
                 <p className="text-xs opacity-70">Background video for the first section. Must be a direct URL (e.g., .mp4).</p>
                 <Input label="Hero Video URL" value={data.heroVideoUrl || ""} onChange={(v) => handleChange("heroVideoUrl", v)} />

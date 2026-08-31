@@ -20,6 +20,7 @@ export const weddingData: WeddingData = {
   openingThumbnailUrl: "https://i.ibb.co/QFc6pvCg/file-0000000069488211b334f24889ba09e4.png",
   openingVideoUrl: "https://www.image2url.com/r2/default/videos/1788010850590-27bb3d4c-eb70-4e57-8299-6bca19925158.mp4",
   heroVideoUrl: "https://cdn.pixabay.com/video/2021/08/18/85489-589366115_large.mp4",
+  ogImageUrl: "",
   heroMessage: "We are honored to welcome you to the\nWedding ceremony of",
   invitationMessage: "We are honored to welcome you to the\nWedding ceremony of Veer & Zara as they\nbegin their journey together in faith and\nlove,\nwe thank you for being part of this blessed\noccasion",
   events: [

@@ -65,6 +65,28 @@ function PublicView() {
     }
   };
 
+  useEffect(() => {
+    if (data?.ogImageUrl) {
+      // Find or create og:image meta tag
+      let ogImageMeta = document.querySelector('meta[property="og:image"]');
+      if (!ogImageMeta) {
+        ogImageMeta = document.createElement('meta');
+        ogImageMeta.setAttribute('property', 'og:image');
+        document.head.appendChild(ogImageMeta);
+      }
+      ogImageMeta.setAttribute('content', data.ogImageUrl);
+      
+      // Some platforms also use twitter:image
+      let twImageMeta = document.querySelector('meta[name="twitter:image"]');
+      if (!twImageMeta) {
+        twImageMeta = document.createElement('meta');
+        twImageMeta.setAttribute('name', 'twitter:image');
+        document.head.appendChild(twImageMeta);
+      }
+      twImageMeta.setAttribute('content', data.ogImageUrl);
+    }
+  }, [data]);
+
   if (!data) {
     return <div className="min-h-screen bg-blush-main flex items-center justify-center font-serif text-wine-dark">Loading...</div>;
   }

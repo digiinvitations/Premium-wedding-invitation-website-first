@@ -43,6 +43,7 @@ export interface WeddingData {
   openingThumbnailUrl?: string;
   openingVideoUrl?: string;
   heroVideoUrl?: string;
+  ogImageUrl?: string;
   heroMessage: string;
   invitationMessage: string;
   events: EventDetails[];
