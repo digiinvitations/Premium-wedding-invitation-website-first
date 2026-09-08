@@ -30,10 +30,9 @@ function PublicView() {
     async function loadData() {
       const dbData = await getWeddingData();
       
-      // Force override the opening media to ensure the requested files are strictly used, 
-      // even if old data is cached in Firestore.
-      dbData.openingThumbnailUrl = "https://i.ibb.co/QFc6pvCg/file-0000000069488211b334f24889ba09e4.png";
-      dbData.openingVideoUrl = "https://www.image2url.com/r2/default/videos/1788010850590-27bb3d4c-eb70-4e57-8299-6bca19925158.mp4";
+      // Clean up broken pixabay links that might be cached in Firestore
+      if (dbData.heroVideoUrl?.includes("pixabay.com")) dbData.heroVideoUrl = "";
+      if (dbData.musicUrl?.includes("pixabay.com")) dbData.musicUrl = "";
       
       setData(dbData);
       if (!dbData.openingThumbnailUrl) {

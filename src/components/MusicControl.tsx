@@ -47,13 +47,15 @@ export function MusicControl({ musicUrl, shouldPlay = false }: MusicControlProps
   }, []);
 
   useEffect(() => {
+    if (!musicUrl) return;
     audioRef.current = new Audio(musicUrl);
     audioRef.current.loop = true;
 
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.src = "";
+        audioRef.current.removeAttribute('src');
+        audioRef.current.load();
       }
     };
   }, [musicUrl]);
