@@ -10,11 +10,14 @@ function getEnvironmentDocId() {
   // Match AI Studio preview URLs: ais-dev-HASH... or ais-pre-HASH...
   const match = hostname.match(/ais-(?:dev|pre)-([^.]+)/);
   if (match) {
+    if (match[1] === "rl2cohqvo2tuixw5mclqfx-14313311583") {
+      return "NEW TEMPLATE FOR 7"; // Recover the user's specific saved data
+    }
     // Both official and remix get isolated IDs, so they never overlap.
     return `wedding_data_${match[1]}`;
   }
   // Deployed to Vercel/Custom Domain: use the official data
-  return "main";
+  return "NEW TEMPLATE FOR 7";
 }
 
 function getRsvpCollectionName() {
