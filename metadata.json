@@ -1,6 +1,6 @@
 {
-  "name": "Wedding Invitation E-Card",
-  "description": "A premium, elegant, mobile-first Wedding Invitation E-Card Website.",
+  "name": "Veer & Zara | Wedding Invitation",
+  "description": "You are invited to the wedding of Veer & Zara.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

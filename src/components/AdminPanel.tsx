@@ -1,19 +1,49 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { getWeddingData, saveWeddingData } from "../services/db";
+import { 
+  getWeddingData, 
+  saveWeddingData, 
+  getEnvironmentDocId, 
+  isOfficialInstance,
+  setCustomSlotId 
+} from "../services/db";
 import { WeddingData } from "../types";
-import { Save, Image as ImageIcon, ArrowLeft } from "lucide-react";
+import { 
+  Save, 
+  Image as ImageIcon, 
+  ArrowLeft, 
+  Download, 
+  Upload, 
+  FileJson, 
+  ShieldCheck, 
+  Copy, 
+  Check, 
+  ExternalLink, 
+  FileText, 
+  Music, 
+  Video, 
+  Database,
+  RefreshCw
+} from "lucide-react";
 
 export function AdminPanel() {
   const [data, setData] = useState<WeddingData | null>(null);
   const [saving, setSaving] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [currentSlot, setCurrentSlot] = useState<string>("");
+  const [isOfficial, setIsOfficial] = useState<boolean>(true);
+  const [customSlotInput, setCustomSlotInput] = useState<string>("");
+  const [showSlotSettings, setShowSlotSettings] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function loadData() {
       const dbData = await getWeddingData();
       setData(dbData);
+      setCurrentSlot(getEnvironmentDocId());
+      setIsOfficial(isOfficialInstance());
     }
     loadData();
   }, []);
@@ -112,6 +142,7 @@ export function AdminPanel() {
   };
 
   const handleSave = async () => {
+    if (!data) return;
     setSaving(true);
     try {
       await saveWeddingData(data);
@@ -124,27 +155,428 @@ export function AdminPanel() {
     }
   };
 
+  // EXPORT: Download complete JSON package containing all wedding data & files
+  const handleExport = () => {
+    if (!data) return;
+    try {
+      const exportPayload = {
+        version: "1.0",
+        exportedAt: new Date().toISOString(),
+        databaseSlot: getEnvironmentDocId(),
+        couple: `${data.groom?.name || "Groom"} & ${data.bride?.name || "Bride"}`,
+        data: data
+      };
+      const jsonString = JSON.stringify(exportPayload, null, 2);
+      const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const safeCouple = `${data.groom?.name || "wedding"}_and_${data.bride?.name || "invitation"}`
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/gi, "_");
+      link.href = url;
+      link.download = `wedding_backup_${safeCouple}_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export error:", err);
+      alert("Failed to export data. Please try again.");
+    }
+  };
+
+  // IMPORT: Import complete JSON package from another website or remix
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const content = event.target?.result as string;
+        const parsed = JSON.parse(content);
+
+        // Support both wrapped export format { data: WeddingData } and raw WeddingData
+        const importedData: WeddingData = parsed.data && typeof parsed.data === "object" ? parsed.data : parsed;
+
+        if (!importedData || typeof importedData !== "object") {
+          throw new Error("Invalid file format. Please provide a valid JSON backup.");
+        }
+        if (!importedData.groom || !importedData.bride) {
+          throw new Error("Missing groom or bride information in the backup file.");
+        }
+
+        // Safety defaults for nested structures
+        if (!Array.isArray(importedData.events)) importedData.events = [];
+        if (!Array.isArray(importedData.timeline)) importedData.timeline = [];
+        if (!Array.isArray(importedData.gallery)) importedData.gallery = [];
+        if (!importedData.venue) {
+          importedData.venue = { name: "", addressLine1: "", addressLine2: "", mapUrl: "" };
+        }
+
+        // Update local state immediately so fields update
+        setData(importedData);
+
+        const shouldAutoSave = window.confirm(
+          `Backup loaded successfully for ${importedData.groom?.name || "Groom"} & ${importedData.bride?.name || "Bride"}!\n\n` +
+          `Events: ${importedData.events.length}\n` +
+          `Do you want to SAVE this imported data to this website's database now?`
+        );
+
+        if (shouldAutoSave) {
+          setSaving(true);
+          await saveWeddingData(importedData);
+          setSaving(false);
+          alert("All data and files have been successfully imported and saved to the database!");
+        } else {
+          alert("Backup data loaded into the Admin Panel! You can make further edits and click 'Save Changes' whenever you are ready.");
+        }
+      } catch (err: any) {
+        console.error("Import error:", err);
+        alert("Failed to import file: " + (err.message || "Invalid JSON structure"));
+      } finally {
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // DOWNLOAD ASSET HELPER: Allows downloading individual media files (videos, mp3, images)
+  const handleDownloadAsset = async (url: string, filename: string) => {
+    if (!url) return;
+    try {
+      if (url.startsWith("data:")) {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        return;
+      }
+
+      // Fetch blob to prompt download
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      // Fallback if CORS prevents blob download
+      window.open(url, "_blank");
+    }
+  };
+
+  const copyToClipboard = (text: string, idx: number) => {
+    navigator.clipboard.writeText(text);
+    setCopiedIdx(idx);
+    setTimeout(() => setCopiedIdx(null), 2000);
+  };
+
+  // List of all media files currently configured in this wedding
+  const mediaFilesList = [
+    { label: "Opening Thumbnail", url: data.openingThumbnailUrl, type: "image", filename: "opening_thumbnail.png" },
+    { label: "Opening Video", url: data.openingVideoUrl, type: "video", filename: "opening_video.mp4" },
+    { label: "Hero Section Video", url: data.heroVideoUrl, type: "video", filename: "hero_video.mp4" },
+    { label: "Background Music", url: data.musicUrl, type: "audio", filename: "background_music.mp3" },
+    { label: "OG Social Image", url: data.ogImageUrl, type: "image", filename: "social_og_image.jpg" },
+    ...(data.events || []).map((ev, i) => ({
+      label: `Event ${i + 1} Video (${ev.title || "Untitled"})`,
+      url: ev.videoUrl,
+      type: "video",
+      filename: `event_${i + 1}_video.mp4`
+    })),
+    ...(data.gallery || []).map((img, i) => ({
+      label: `Gallery Image ${i + 1}`,
+      url: img,
+      type: "image",
+      filename: `gallery_${i + 1}.jpg`
+    }))
+  ].filter(item => Boolean(item.url));
+
+  const handleDownloadAllLinksTxt = () => {
+    if (!data) return;
+    const lines: string[] = [
+      `================================================`,
+      `WEDDING ASSET & MEDIA URL BACKUP`,
+      `Couple: ${data.groom?.name} & ${data.bride?.name}`,
+      `Generated: ${new Date().toLocaleString()}`,
+      `Database Slot: ${currentSlot}`,
+      `================================================`,
+      ``,
+      `[OPENING THUMBNAIL]`,
+      data.openingThumbnailUrl || "(None)",
+      ``,
+      `[OPENING VIDEO]`,
+      data.openingVideoUrl || "(None)",
+      ``,
+      `[HERO BACKGROUND VIDEO]`,
+      data.heroVideoUrl || "(None)",
+      ``,
+      `[BACKGROUND MUSIC TRACK]`,
+      data.musicUrl || "(None)",
+      ``,
+      `[OG SOCIAL SHARE IMAGE]`,
+      data.ogImageUrl || "(None)",
+      ``,
+      `[EVENTS]`,
+      ...(data.events || []).map((ev, i) => 
+        `Event ${i + 1}: ${ev.title} (${ev.date || 'No date'})\n  Video: ${ev.videoUrl || 'None'}\n  Map: ${ev.mapUrl || 'None'}`
+      ),
+      ``,
+      `[GALLERY IMAGES]`,
+      ...(data.gallery || []).map((img, i) => `Photo ${i + 1}: ${img.startsWith('data:') ? '[Base64 Uploaded Image]' : img}`)
+    ];
+
+    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `wedding_media_links_${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleUpdateCustomSlot = () => {
+    if (!customSlotInput.trim()) {
+      setCustomSlotId("");
+      alert("Reset to automatic slot identification.");
+    } else {
+      setCustomSlotId(customSlotInput.trim());
+      alert(`Database slot updated to: ${customSlotInput.trim()}`);
+    }
+    window.location.reload();
+  };
+
   return (
     <div className="min-h-screen bg-blush-main p-4 md:p-8 font-serif text-text-body">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm p-6 md:p-10 border border-pink-border">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 border-b border-pink-border pb-4 gap-4">
+        
+        {/* Top Header with Navigation & Action Buttons */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-pink-border pb-6 gap-4">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-2 text-wine-dark hover:text-burgundy bg-blush-light px-3 py-1.5 rounded-full border border-pink-border/50 transition-colors text-sm font-semibold">
               <ArrowLeft className="w-4 h-4" /> Go Back
             </Link>
-            <h1 className="text-3xl font-script text-wine-dark">Admin Panel</h1>
+            <div>
+              <h1 className="text-3xl font-script text-wine-dark">Admin Panel</h1>
+              <p className="text-xs text-text-body/70 font-sans mt-0.5">Manage wedding details, media files, and backups</p>
+            </div>
           </div>
-          <button 
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 bg-burgundy text-white px-6 py-2 rounded-md hover:bg-wine-dark transition-colors disabled:opacity-50"
-          >
-            <Save className="w-4 h-4" />
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
+
+          {/* Action Bar: Export, Import, Save */}
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            {/* Hidden JSON file input */}
+            <input 
+              ref={fileInputRef}
+              type="file" 
+              accept=".json,application/json"
+              onChange={handleImport}
+              className="hidden"
+            />
+
+            <button 
+              onClick={handleExport}
+              type="button"
+              className="flex items-center gap-1.5 bg-white text-wine-dark border border-pink-border px-3.5 py-2 rounded-md hover:bg-blush-light transition-colors text-xs font-bold uppercase tracking-wider shadow-sm"
+              title="Download full wedding data & media as a JSON file"
+            >
+              <Download className="w-4 h-4 text-wine-dark" />
+              Export
+            </button>
+
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              type="button"
+              className="flex items-center gap-1.5 bg-white text-wine-dark border border-pink-border px-3.5 py-2 rounded-md hover:bg-blush-light transition-colors text-xs font-bold uppercase tracking-wider shadow-sm"
+              title="Upload and load a wedding JSON backup file"
+            >
+              <Upload className="w-4 h-4 text-wine-dark" />
+              Import
+            </button>
+
+            <button 
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 bg-burgundy text-white px-5 py-2 rounded-md hover:bg-wine-dark transition-colors disabled:opacity-50 text-xs font-bold uppercase tracking-wider shadow-sm ml-auto md:ml-0"
+            >
+              <Save className="w-4 h-4" />
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
         </div>
 
         <div className="space-y-8">
+
+          {/* REMIX ISOLATION & DATABASE STATUS BANNER */}
+          <div className="bg-gradient-to-r from-pink-50 to-blush-light rounded-xl p-5 border border-pink-border/70 shadow-xs">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-white rounded-lg border border-pink-border/60 text-wine-dark shadow-xs">
+                  <ShieldCheck className="w-5 h-5 text-wine-dark" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-bold text-wine-dark text-sm">Database Isolation & Remix Protection</h3>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                      isOfficial 
+                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300" 
+                        : "bg-blue-100 text-blue-800 border border-blue-300"
+                    }`}>
+                      {isOfficial ? "Official Master Site" : "Isolated Remix Instance"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-body/80 mt-1 font-sans">
+                    Active Storage Slot: <code className="bg-white/80 px-1.5 py-0.5 rounded border border-pink-border/50 text-wine-dark font-mono text-[11px]">{currentSlot}</code>
+                  </p>
+                  <p className="text-xs text-text-body/70 mt-0.5 font-sans">
+                    {isOfficial 
+                      ? "This is your primary master website. When you create a remix, the remix will automatically receive its own independent slot."
+                      : "Remix isolation is active. All edits and files saved in this remix will NEVER touch or overwrite the official website."}
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                type="button"
+                onClick={() => setShowSlotSettings(!showSlotSettings)}
+                className="text-xs text-wine-dark underline hover:text-burgundy font-sans self-end sm:self-center"
+              >
+                {showSlotSettings ? "Hide Slot Settings" : "Slot Settings"}
+              </button>
+            </div>
+
+            {showSlotSettings && (
+              <div className="mt-4 pt-4 border-t border-pink-border/40 font-sans text-xs flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <span className="text-text-body/80 font-medium">Custom Database Slot ID:</span>
+                <input 
+                  type="text"
+                  placeholder="e.g. wedding_client_2027"
+                  value={customSlotInput}
+                  onChange={(e) => setCustomSlotInput(e.target.value)}
+                  className="bg-white border border-pink-border rounded px-2.5 py-1.5 text-xs flex-1 max-w-xs focus:outline-none focus:border-pink-accent"
+                />
+                <button
+                  type="button"
+                  onClick={handleUpdateCustomSlot}
+                  className="bg-wine-dark text-white px-3 py-1.5 rounded text-xs hover:bg-burgundy transition-colors"
+                >
+                  Apply Slot
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setCustomSlotId(""); window.location.reload(); }}
+                  className="bg-white border border-pink-border text-wine-dark px-3 py-1.5 rounded text-xs hover:bg-blush-light transition-colors"
+                >
+                  Reset to Auto
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* BACKUP, IMPORT & EXPORT CENTER */}
+          <section className="bg-white rounded-xl p-5 border border-pink-border/80 shadow-xs">
+            <div className="flex items-center gap-2 mb-2">
+              <FileJson className="w-5 h-5 text-wine-dark" />
+              <h2 className="text-lg font-bold text-wine-dark">Data Backup & Migration (Import / Export)</h2>
+            </div>
+            <p className="text-xs text-text-body/75 font-sans mb-4">
+              Download all details, messages, timeline events, and file URLs as a portable backup file. 
+              You can import this backup file into any remix or another wedding website with 1-click.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+              <button
+                type="button"
+                onClick={handleExport}
+                className="flex items-center justify-center gap-2 p-3 bg-blush-light hover:bg-pink-100/70 border border-pink-border rounded-lg text-wine-dark font-sans font-semibold text-xs transition-colors"
+              >
+                <Download className="w-4 h-4 text-wine-dark" />
+                <span>Download Full Wedding Backup (.json)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center justify-center gap-2 p-3 bg-blush-light hover:bg-pink-100/70 border border-pink-border rounded-lg text-wine-dark font-sans font-semibold text-xs transition-colors"
+              >
+                <Upload className="w-4 h-4 text-wine-dark" />
+                <span>Import Wedding Backup File (.json)</span>
+              </button>
+            </div>
+
+            {/* Uploaded Files & Media List */}
+            <div className="mt-4 pt-4 border-t border-pink-border/50">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-wine-dark">Uploaded Media & Files ({mediaFilesList.length})</h3>
+                  <p className="text-[11px] text-text-body/70 font-sans">
+                    All media files and videos uploaded to this wedding website. Click to download or copy direct links.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadAllLinksTxt}
+                  className="flex items-center gap-1.5 text-xs text-wine-dark hover:text-burgundy bg-blush-light px-2.5 py-1 rounded border border-pink-border font-sans font-medium"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Download Links (.txt)</span>
+                </button>
+              </div>
+
+              {mediaFilesList.length === 0 ? (
+                <p className="text-xs text-text-body/60 italic font-sans py-2">No media files currently uploaded.</p>
+              ) : (
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                  {mediaFilesList.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 bg-blush-light/50 rounded-lg border border-pink-border/40 text-xs font-sans gap-2">
+                      <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                        {item.type === "video" ? (
+                          <Video className="w-3.5 h-3.5 text-wine-dark shrink-0" />
+                        ) : item.type === "audio" ? (
+                          <Music className="w-3.5 h-3.5 text-wine-dark shrink-0" />
+                        ) : (
+                          <ImageIcon className="w-3.5 h-3.5 text-wine-dark shrink-0" />
+                        )}
+                        <span className="font-semibold text-wine-dark shrink-0">{item.label}:</span>
+                        <span className="truncate text-text-body/70 text-[11px]">{item.url}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(item.url || "", idx)}
+                          className="p-1 text-wine-dark hover:bg-white rounded transition-colors"
+                          title="Copy Link"
+                        >
+                          {copiedIdx === idx ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadAsset(item.url || "", item.filename)}
+                          className="flex items-center gap-1 px-2 py-1 bg-white hover:bg-blush-light border border-pink-border/60 rounded text-[11px] font-medium text-wine-dark transition-colors"
+                          title="Download File"
+                        >
+                          <Download className="w-3 h-3" />
+                          <span>Download</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+
           {/* Couple Details */}
           <section>
             <h2 className="text-xl font-bold text-wine-dark mb-4">Couple Details</h2>
@@ -189,7 +621,7 @@ export function AdminPanel() {
              </div>
           </section>
 
-          {/* Media Settings */}
+          {/* Events */}
           <section>
             <h2 className="text-xl font-bold text-wine-dark mb-4">Events</h2>
             <div className="space-y-4">
@@ -245,7 +677,7 @@ export function AdminPanel() {
                   className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-burgundy file:text-white hover:file:bg-wine-dark cursor-pointer"
                 />
                 <Input label="Or Thumbnail URL" value={data.openingThumbnailUrl || ""} onChange={(v) => handleChange("openingThumbnailUrl", v)} />
-                {data.openingThumbnailUrl && <img src={data.openingThumbnailUrl} className="w-24 h-24 object-cover rounded-md mt-2" />}
+                {data.openingThumbnailUrl && <img src={data.openingThumbnailUrl} className="w-24 h-24 object-cover rounded-md mt-2 border border-pink-border" alt="Thumbnail Preview" />}
               </div>
 
               <div className="flex flex-col gap-2 border-t border-pink-border pt-4">
