@@ -5,7 +5,8 @@ import {
   saveWeddingData, 
   getEnvironmentDocId, 
   isOfficialInstance,
-  setCustomSlotId 
+  setCustomSlotId,
+  restoreOfficialMasterData
 } from "../services/db";
 import { WeddingData } from "../types";
 import { 
@@ -357,6 +358,27 @@ export function AdminPanel() {
     window.location.reload();
   };
 
+  const handleRestoreOfficial = async () => {
+    const confirm = window.confirm(
+      "Are you sure you want to recover and restore the initial official data for Veer & Zara?\n\nThis will restore all original Veer & Zara details, hero section video, events, timeline, and media settings."
+    );
+    if (!confirm) return;
+
+    setSaving(true);
+    try {
+      setCustomSlotId("");
+      const restored = await restoreOfficialMasterData();
+      setData(restored);
+      setCurrentSlot(getEnvironmentDocId());
+      alert("Initial Veer & Zara data successfully recovered and restored!");
+    } catch (err) {
+      console.error("Failed to restore initial data:", err);
+      alert("Failed to restore initial data. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-blush-main p-4 md:p-8 font-serif text-text-body">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm p-6 md:p-10 border border-pink-border">
@@ -511,6 +533,16 @@ export function AdminPanel() {
               >
                 <Upload className="w-4 h-4 text-wine-dark" />
                 <span>Import Wedding Backup File (.json)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleRestoreOfficial}
+                disabled={saving}
+                className="flex items-center justify-center gap-2 p-3 bg-burgundy/10 hover:bg-burgundy/20 border border-burgundy/30 rounded-lg text-burgundy font-sans font-semibold text-xs transition-colors sm:col-span-2 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 text-burgundy ${saving ? "animate-spin" : ""}`} />
+                <span>Recover Initial Veer & Zara Data (Reset to Original)</span>
               </button>
             </div>
 

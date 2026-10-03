@@ -3,7 +3,7 @@ import { db } from "../firebase";
 import { WeddingData } from "../types";
 import { weddingData as defaultData } from "../data";
 
-export const OFFICIAL_DOC_ID = "NEW TEMPLATE FOR 7";
+export const OFFICIAL_DOC_ID = "wedding_data_rl2cohqvo2tuixw5mclqfx-14313311583";
 export const OFFICIAL_HASH = "rl2cohqvo2tuixw5mclqfx-14313311583";
 
 // Generate a unique ID based on the environment to prevent remixes from overwriting each other's data.
@@ -13,7 +13,10 @@ export function getEnvironmentDocId(): string {
   // Check if user set a custom slot override in localStorage
   try {
     const customSlot = localStorage.getItem("wedding_custom_slot_id");
-    if (customSlot && customSlot.trim()) {
+    // Purge obsolete erroneous slot
+    if (customSlot === "NEW TEMPLATE FOR 7") {
+      localStorage.removeItem("wedding_custom_slot_id");
+    } else if (customSlot && customSlot.trim()) {
       return customSlot.trim();
     }
   } catch (e) {
@@ -33,9 +36,9 @@ export function getEnvironmentDocId(): string {
     return `wedding_data_${match[1]}`;
   }
 
-  // If running locally (localhost)
+  // If running locally (localhost), use the official master slot
   if (hostname === "localhost" || hostname === "127.0.0.1") {
-    return "wedding_data_local";
+    return OFFICIAL_DOC_ID;
   }
 
   // Deployed to Vercel/Netlify or custom domain: isolate by domain name
@@ -121,6 +124,18 @@ export async function saveWeddingData(data: WeddingData): Promise<void> {
   const slotId = getEnvironmentDocId();
   const docRef = doc(db, "weddingConfig", slotId);
   await setDoc(docRef, data);
+}
+
+export async function restoreOfficialMasterData(): Promise<WeddingData> {
+  const masterDocRef = doc(db, "weddingConfig", OFFICIAL_DOC_ID);
+  const masterSnap = await getDoc(masterDocRef);
+  let masterData: WeddingData = defaultData;
+  if (masterSnap.exists()) {
+    masterData = masterSnap.data() as WeddingData;
+  }
+  const currentSlotId = getEnvironmentDocId();
+  await setDoc(doc(db, "weddingConfig", currentSlotId), masterData);
+  return masterData;
 }
 
 export async function submitRSVP(rsvpData: any): Promise<void> {
