@@ -162,6 +162,7 @@ export function AdminPanel() {
     try {
       const exportPayload = {
         version: "1.0",
+        templateName: "Veer & Zara Premium Template-2",
         exportedAt: new Date().toISOString(),
         databaseSlot: getEnvironmentDocId(),
         couple: `${data.groom?.name || "Groom"} & ${data.bride?.name || "Bride"}`,
@@ -171,11 +172,8 @@ export function AdminPanel() {
       const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      const safeCouple = `${data.groom?.name || "wedding"}_and_${data.bride?.name || "invitation"}`
-        .toLowerCase()
-        .replace(/[^a-z0-9_-]/gi, "_");
       link.href = url;
-      link.download = `wedding_backup_${safeCouple}_${new Date().toISOString().slice(0, 10)}.json`;
+      link.download = `veer_zara_premium_template_2_backup_${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -360,7 +358,7 @@ export function AdminPanel() {
 
   const handleRestoreOfficial = async () => {
     const confirm = window.confirm(
-      "Are you sure you want to recover and restore the initial official data for Veer & Zara?\n\nThis will restore all original Veer & Zara details, hero section video, events, timeline, and media settings."
+      "Are you sure you want to recover and restore the official Veer & Zara Premium Template-2 data?\n\nThis will restore all permanent details, music, hero & opening videos, events, timeline, and venue settings."
     );
     if (!confirm) return;
 
@@ -370,7 +368,7 @@ export function AdminPanel() {
       const restored = await restoreOfficialMasterData();
       setData(restored);
       setCurrentSlot(getEnvironmentDocId());
-      alert("Initial Veer & Zara data successfully recovered and restored!");
+      alert("Veer & Zara Premium Template-2 official data successfully restored!");
     } catch (err) {
       console.error("Failed to restore initial data:", err);
       alert("Failed to restore initial data. Please try again.");
@@ -391,7 +389,7 @@ export function AdminPanel() {
             </Link>
             <div>
               <h1 className="text-3xl font-script text-wine-dark">Admin Panel</h1>
-              <p className="text-xs text-text-body/70 font-sans mt-0.5">Manage wedding details, media files, and backups</p>
+              <p className="text-xs text-text-body/70 font-sans mt-0.5">Veer &amp; Zara Premium Template-2 • Manage wedding details, media files, and backups</p>
             </div>
           </div>
 
@@ -542,7 +540,7 @@ export function AdminPanel() {
                 className="flex items-center justify-center gap-2 p-3 bg-burgundy/10 hover:bg-burgundy/20 border border-burgundy/30 rounded-lg text-burgundy font-sans font-semibold text-xs transition-colors sm:col-span-2 disabled:opacity-50"
               >
                 <RefreshCw className={`w-4 h-4 text-burgundy ${saving ? "animate-spin" : ""}`} />
-                <span>Recover Initial Veer & Zara Data (Reset to Original)</span>
+                <span>Recover Official Veer &amp; Zara Premium Template-2 Data</span>
               </button>
             </div>
 

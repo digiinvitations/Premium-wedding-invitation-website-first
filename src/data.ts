@@ -4,18 +4,18 @@ export const weddingData: WeddingData = {
   groom: {
     name: "Veer",
     parents: "Son of Mr. & Mrs. Khan",
-    education: "M.Tech, PhD",
     profession: "Software Engineer",
+    education: "M.Tech, PhD"
   },
   bride: {
     name: "Zara",
     parents: "Daughter of Mr. & Mrs. Pathan",
-    education: "B.Tech, MBA",
     profession: "Advocate, High Court",
+    education: "B.Tech, MBA"
   },
-  weddingDate: "2026-09-30T10:00:00", // For countdown logic
-  weddingDateFormatted: "September 30, 2026",
-  weddingTimeFormatted: "10:00 AM",
+  weddingDate: "2027-01-10T12:00",
+  weddingDateFormatted: "January 10, 2027",
+  weddingTimeFormatted: "12:00 Pm",
   weddingDayFormatted: "Wednesday",
   openingThumbnailUrl: "https://i.ibb.co/QFc6pvCg/file-0000000069488211b334f24889ba09e4.png",
   openingVideoUrl: "https://www.image2url.com/r2/default/videos/1788010850590-27bb3d4c-eb70-4e57-8299-6bca19925158.mp4",
@@ -27,40 +27,38 @@ export const weddingData: WeddingData = {
     {
       id: "ev1",
       title: "Mahendi",
-      date: "Jun 27, 2026",
+      date: "2027-01-07",
       time: "9:30 PM",
       location: "At Bride's House",
-      description: "Join us for a joyful evening of Mahendi & music.",
-      videoUrl: "https://www.image2url.com/r2/default/videos/1789822620041-347bc615-25d0-47b0-9751-ff442ae2efd0.mp4"
+      videoUrl: "https://www.image2url.com/r2/default/videos/1788110629349-5c2d80d0-da2d-4a86-9f6c-9ee32b0aad1e.mp4",
+      mapUrl: "https://maps.app.goo.gl/2jcrNgRBA8j3s5fo8?g_st=ac"
     },
     {
       id: "ev2",
       title: "Haldi",
-      date: "Jun 28, 2026",
+      date: "2027-01-07",
       time: "8:30 PM",
       location: "At Groom's House",
-      description: "Celebrate the auspicious yellow moments with us.",
-      videoUrl: "https://www.image2url.com/r2/default/videos/1789822620041-347bc615-25d0-47b0-9751-ff442ae2efd0.mp4"
+      videoUrl: "https://www.image2url.com/r2/default/videos/1788110638012-da72db7f-13ba-442b-9a43-7fe583bdb28c.mp4",
+      mapUrl: "https://maps.app.goo.gl/2jcrNgRBA8j3s5fo8?g_st=ac"
     },
     {
       id: "ev3",
-      title: "Sangeet",
-      date: "Jun 29, 2026",
+      title: "Reception ",
+      date: "2027-01-12",
       time: "9:00 PM",
       location: "At The Taj Mahal Palace",
-      description: "A night filled with dance, celebration and joy.",
-      videoUrl: "https://www.image2url.com/r2/default/videos/1789754508244-02817786-afd1-4ea9-bdbd-88bbb0eb33ae.mp4",
-      mapUrl: "https://maps.app.goo.gl/TajMahalPalace"
+      videoUrl: "https://www.image2url.com/r2/default/videos/1788110669827-6e25a2d4-258f-40e3-b917-8c7360ebfb42.mp4",
+      mapUrl: "https://maps.app.goo.gl/2jcrNgRBA8j3s5fo8?g_st=ac"
     },
     {
-      id: "ev4",
-      title: "Wedding Ceremony",
-      date: "Jun 30, 2026",
-      time: "10:30 AM",
-      location: "The Taj Mahal Palace",
-      description: "As we tie the knot, your gracious presence is requested.",
+      id: "1788110938295",
+      title: "Wedding Ceremony ",
+      date: "2027-01-10",
+      time: "6:00 Pm",
+      location: "Hotel Swarn Palace ",
       videoUrl: "https://www.image2url.com/r2/default/videos/1788110729435-449d9665-1970-450a-a6e6-7afc70798877.mp4",
-      mapUrl: "https://maps.app.goo.gl/TajMahalPalace"
+      mapUrl: "https://maps.app.goo.gl/2jcrNgRBA8j3s5fo8?g_st=ac"
     }
   ],
   timeline: [
@@ -87,10 +85,10 @@ export const weddingData: WeddingData = {
     }
   ],
   venue: {
-    name: "The Taj Mahal Palace",
-    addressLine1: "Apollo Bandar, Colaba, Mumbai, Maharashtra",
-    addressLine2: "400001",
-    mapUrl: "https://maps.app.goo.gl/TajMahalPalace", // Placeholder link
+    name: "The Hostel Swarna Palace",
+    addressLine1: "Nawada Road, Saharanpur ",
+    addressLine2: "Up-11",
+    mapUrl: "https://maps.app.goo.gl/2jcrNgRBA8j3s5fo8?g_st=ac"
   },
   transportation: "Transportation service will be available\nfrom the designated pickup center to the venue.\nPickup point: Central Station",
   dressCode: "Formal & Elegant",
@@ -99,6 +97,6 @@ export const weddingData: WeddingData = {
     "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2070&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1606800052052-a08af7148866?q=80&w=2070&auto=format&fit=crop"
   ],
-  musicUrl: "https://www.image2url.com/r2/default/audio/1788680385494-eea3ea92-a6be-4b1b-b28a-4a4434ba37de.mp3",
+  musicUrl: "https://www.image2url.com/r2/default/audio/1788064469832-bf9b7150-96e8-40a9-aa58-a25cddf491c7.mp3",
   closingMessage: "We can't wait to celebrate\nwith you!"
 };

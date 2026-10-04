@@ -35,7 +35,7 @@ function PublicView() {
         dbData.heroVideoUrl = "https://www.image2url.com/r2/default/videos/1788011182513-3d74480d-c3ef-41df-926f-d21988765de3.mp4";
       }
       if (!dbData.musicUrl || dbData.musicUrl.includes("pixabay.com")) {
-        dbData.musicUrl = "https://www.image2url.com/r2/default/audio/1788680385494-eea3ea92-a6be-4b1b-b28a-4a4434ba37de.mp3";
+        dbData.musicUrl = "https://www.image2url.com/r2/default/audio/1788064469832-bf9b7150-96e8-40a9-aa58-a25cddf491c7.mp3";
       }
       
       setData(dbData);
