@@ -30,9 +30,13 @@ function PublicView() {
     async function loadData() {
       const dbData = await getWeddingData();
       
-      // Clean up broken pixabay links that might be cached in Firestore
-      if (dbData.heroVideoUrl?.includes("pixabay.com")) dbData.heroVideoUrl = "";
-      if (dbData.musicUrl?.includes("pixabay.com")) dbData.musicUrl = "";
+      // Ensure working media URLs for hero background video & music
+      if (!dbData.heroVideoUrl || dbData.heroVideoUrl.includes("pixabay.com")) {
+        dbData.heroVideoUrl = "https://www.image2url.com/r2/default/videos/1788011182513-3d74480d-c3ef-41df-926f-d21988765de3.mp4";
+      }
+      if (!dbData.musicUrl || dbData.musicUrl.includes("pixabay.com")) {
+        dbData.musicUrl = "https://www.image2url.com/r2/default/audio/1788680385494-eea3ea92-a6be-4b1b-b28a-4a4434ba37de.mp3";
+      }
       
       setData(dbData);
       if (!dbData.openingThumbnailUrl) {
